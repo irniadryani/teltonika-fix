@@ -188,7 +188,7 @@ export default function Kelola_Client() {
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, touchedFields, isSubmitted },
     reset,
     control,
   } = useForm({
@@ -236,15 +236,15 @@ export default function Kelola_Client() {
       return;
     }
 
-    // Mengubah date menjadi format YYYY-MM-DD
     const formattedDate = new Date(date).toISOString().split("T")[0];
     data.tgl_bergabung = formattedDate;
     data.status_akun = "Aktif";
     data.password_client = "client123";
 
-    console.log("Data before sending:", data); // Debugging log
+    console.log("Data before sending:", data);
     try {
       await handleInsertClient.mutateAsync(data);
+      handleClose();
     } catch (error) {
       console.error("Error during mutation:", error);
     }
@@ -282,8 +282,10 @@ export default function Kelola_Client() {
       setProvinsi("");
       setKota("");
       setKecamatan("");
+      handleClose(); 
     })();
   };
+  
 
   const resetForm = () => {
     reset();
@@ -530,24 +532,30 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setProvinsi(newValue); // Simpan string yang diketik
+                              setProvinsi(newValue); 
                             } else if (newValue && newValue.provinsi) {
-                              setProvinsi(newValue.provinsi); // Simpan provinsi yang dipilih dari dropdown
+                              setProvinsi(newValue.provinsi); 
                             } else {
-                              setProvinsi(""); // Kosongkan jika tidak ada
+                              setProvinsi("");
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setProvinsi(newInputValue); // Simpan nilai yang diketik saat pengguna mengetik
+                            setProvinsi(newInputValue); 
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Provinsi"
                               variant="outlined"
-                              error={!provinsi}
+                              error={
+                                !!errors.provinsi &&
+                                (touchedFields.provinsi || isSubmitted)
+                              }
                               helperText={
-                                !provinsi ? "Provinsi diperlukan" : ""
+                                !!errors.provinsi &&
+                                (touchedFields.provinsi || isSubmitted)
+                                  ? "Provinsi diperlukan"
+                                  : ""
                               }
                               {...register("provinsi", { required: true })}
                             />
@@ -560,7 +568,7 @@ export default function Kelola_Client() {
                       <Typography
                         id="modal-modal-title"
                         variant="h6"
-                        components="h6"
+                        component="h6"
                         sx={{
                           minWidth: "150px",
                           fontSize: "1rem",
@@ -568,6 +576,7 @@ export default function Kelola_Client() {
                       >
                         Kabupaten/Kota
                       </Typography>
+
                       {loadingKabupatenKota ? (
                         <CircularProgress />
                       ) : (
@@ -583,24 +592,30 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setKota(newValue); // Simpan string yang diketik
+                              setKota(newValue); 
                             } else if (newValue && newValue.kabupaten) {
-                              setKota(newValue.kabupaten); // Simpan kabupaten yang dipilih dari dropdown
+                              setKota(newValue.kabupaten); 
                             } else {
-                              setKota(""); // Kosongkan jika tidak ada
+                              setKota(""); 
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setKota(newInputValue); // Simpan nilai yang diketik
+                            setKota(newInputValue); 
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Kabupaten/Kota"
                               variant="outlined"
-                              error={!kota}
+                              error={
+                                !!errors.kabupaten &&
+                                (touchedFields.kabupaten || isSubmitted)
+                              }
                               helperText={
-                                !kota ? "Kabupaten/Kota diperlukan" : ""
+                                !!errors.kabupaten &&
+                                (touchedFields.kabupaten || isSubmitted)
+                                  ? "Kabupaten/Kota diperlukan"
+                                  : ""
                               }
                               {...register("kabupaten", { required: true })}
                             />
@@ -609,6 +624,7 @@ export default function Kelola_Client() {
                       )}
                     </Stack>
 
+                
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Typography
                         id="modal-modal-title"
@@ -637,24 +653,30 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setKecamatan(newValue); // Simpan string yang diketik
+                              setKecamatan(newValue); 
                             } else if (newValue && newValue.kecamatan) {
-                              setKecamatan(newValue.kecamatan); // Simpan kecamatan yang dipilih dari dropdown
+                              setKecamatan(newValue.kecamatan); 
                             } else {
-                              setKecamatan(""); // Kosongkan jika tidak ada
+                              setKecamatan(""); 
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setKecamatan(newInputValue); // Simpan nilai yang diketik
+                            setKecamatan(newInputValue); 
                           }}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label="Kecamatan"
                               variant="outlined"
-                              error={!kecamatan}
+                              error={
+                                !!errors.kecamatan &&
+                                (touchedFields.kecamatan || isSubmitted)
+                              }
                               helperText={
-                                !kecamatan ? "Kecamatan diperlukan" : ""
+                                !!errors.kecamatan &&
+                                (touchedFields.kecamatan || isSubmitted)
+                                  ? "Kecamatan diperlukan"
+                                  : ""
                               }
                               {...register("kecamatan", { required: true })}
                             />
@@ -662,152 +684,6 @@ export default function Kelola_Client() {
                         />
                       )}
                     </Stack>
-
-                    {/* <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography
-                        id="modal-modal-title"
-                        variant="h6"
-                        component="h6"
-                        sx={{
-                          minWidth: "150px",
-                          fontSize: "1rem",
-                        }}
-                      >
-                        Provinsi
-                      </Typography>
-
-                      {loadingProvinsi ? (
-                        <CircularProgress />
-                      ) : (
-                        <Autocomplete
-                          sx={{ width: 500 }}
-                          options={dataProvinsi}
-                          getOptionLabel={(option) => option.provinsi}
-                          value={provinsi}
-                          onChange={(e, newValue) => {
-                            setProvinsi(newValue)
-                            if (
-                              typeof newValue ===
-                              'string'
-                            ) {
-                              setProvinsi({
-                                label: newValue,
-                              })
-                            }
-                          }}
-                          freeSolo
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Provinsi"
-                              variant="outlined"
-                              error={!provinsi}
-                              helperText={
-                                !provinsi ? "Provinsi diperlukan" : ""
-                              }
-                              {...register("provinsi", {
-                                required: true,
-                              })}
-                            />
-                          )}
-                        />
-                      )}
-                    </Stack>
-
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography
-                        id="modal-modal-title"
-                        variant="h6"
-                        components="h6"
-                        sx={{
-                          minWidth: "150px",
-                          fontSize: "1rem",
-                        }}
-                      >
-                        Kabupaten/Kota
-                      </Typography>
-                      {loadingKabupatenKota ? (
-                        <CircularProgress />
-                      ) : (
-                        <Autocomplete
-                          sx={{ width: 500 }}
-                          options={dataKabupatenKota}
-                          getOptionLabel={(option) => option.kabupaten}
-                          value={kota}
-                          onChange={(e, newValue) => {
-                            setKota(newValue);
-                            if (typeof newValue === "string") {
-                              setKota({
-                                label: newValue,
-                              });
-                            }
-                          }}
-                          freeSolo
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Kabupaten/Kota"
-                              variant="outlined"
-                              error={!kota}
-                              helperText={
-                                !kota ? "Kabupaten/Kota diperlukan" : ""
-                              }
-                              {...register("kabupaten", {
-                                required: true,
-                              })}
-                            />
-                          )}
-                        />
-                      )}
-                    </Stack>
-
-                    <Stack direction="row" spacing={2} alignItems="center">
-                      <Typography
-                        id="modal-modal-title"
-                        variant="h6"
-                        component="h6"
-                        sx={{
-                          minWidth: "150px",
-                          fontSize: "1rem",
-                        }}
-                      >
-                        Kecamatan
-                      </Typography>
-
-                      {loadingKecamatan ? (
-                        <CircularProgress />
-                      ) : (
-                        <Autocomplete
-                          sx={{ width: 500 }}
-                          options={dataKecamatan}
-                          getOptionLabel={(option) => option.kecamatan}
-                          value={kecamatan}
-                          onChange={(e, newValue) => {
-                            setKecamatan(newValue);
-                            if (typeof newValue === "string") {
-                              setKecamatan({
-                                label: newValue,
-                              });
-                            }
-                          }}
-                          freeSolo
-                          renderInput={(params) => (
-                            <TextField
-                              {...params}
-                              label="Kecamatan"
-                              variant="outlined"
-                              error={!kecamatan}
-                              helperText={
-                                !kecamatan ? "Kecamatan diperlukan" : ""
-                              }
-                              {...register("kecamatan", {
-                                required: true,
-                              })}
-                            />
-                          )}
-                        />
-                      )}
-                    </Stack> */}
 
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Typography
@@ -867,7 +743,7 @@ export default function Kelola_Client() {
                       <Typography
                         id="modal-modal-title"
                         variant="h6"
-                        components="h6"
+                        component="h6"
                         sx={{
                           minWidth: "150px",
                           fontSize: "1rem",
@@ -881,10 +757,15 @@ export default function Kelola_Client() {
                         variant="outlined"
                         sx={{ width: 500 }}
                         {...register("email", {
-                          required: true,
+                          required: "Email is required",
+                          pattern: {
+                            value:
+                              /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+                            message: "Invalid email address",
+                          },
                         })}
                         error={!!errors.email}
-                        helperText={errors.email ? "Email diperlukan" : ""}
+                        helperText={errors.email ? errors.email.message : ""}
                       />
                     </Stack>
 
@@ -1751,9 +1632,9 @@ export default function Kelola_Client() {
                               <Button
                                 variant="contained"
                                 color="error"
-                                onClick={handleReset}
+                                onClick={handleClose}
                               >
-                                Reset
+                                Cancel
                               </Button>
                               <Button
                                 variant="contained"

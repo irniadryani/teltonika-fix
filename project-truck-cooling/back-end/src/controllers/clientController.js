@@ -104,52 +104,6 @@ export const createClient = async (req, res) => {
   }
 };
 
-//create client
-// export const createClient = async (req, res) => {
-//   const {
-//     namaclient,
-//     password_client,
-//     jalan,
-//     provinsi,
-//     kabupaten,
-//     kecamatan,
-//     kode_pos,
-//     kontakclient,
-//     email,
-//     tgl_bergabung,
-//     status_akun
-//   } = req.body;
-//   try {
-//     const emailCheck = await pool.query(
-//       "SELECT * FROM Client WHERE email = $1",
-//       [email]
-//     );
-
-//     if (emailCheck.rows.length > 0) {
-//       return res.status(409).json({ message: "Email sudah terdaftar" });
-//     }
-
-//     const result = await pool.query(
-//       "INSERT INTO Client (namaclient, password_client, jalan, provinsi, kabupaten, kecamatan, kode_pos, kontakclient, email, tgl_bergabung, status_akun) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) RETURNING *",
-//       [
-//         namaclient,
-//         password_client,
-//         jalan,
-//         provinsi,
-//         kabupaten,
-//         kecamatan,
-//         kode_pos,
-//         kontakclient,
-//         email,
-//         tgl_bergabung,
-//         status_akun
-//       ]
-//     );
-//     res.status(201).json(result.rows[0]);
-//   } catch (err) {
-//     res.status(500).send(err.message);
-//   }
-// };
 
 // get all client
 export const getClients = async (req, res) => {
@@ -166,10 +120,7 @@ export const getClients = async (req, res) => {
     if (searchTerm) {
       const searchCondition = `
         WHERE 
-        LOWER(namaclient) LIKE LOWER($1) OR
-        LOWER(jalan) LIKE LOWER($1) OR
-        LOWER(kontakclient) LIKE LOWER($1) OR
-        LOWER(email) LIKE LOWER($1)
+        LOWER(namaclient) LIKE LOWER($1)
       `;
       countQuery += searchCondition;
       selectQuery += searchCondition;
