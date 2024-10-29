@@ -37,13 +37,14 @@ import {
   insertClientFn,
   suspendFn,
   restoreFn,
+  resetPasswordFn,
 } from "../../api/Kelola-Client/KelolaClient";
 import {
   listKabupatenKotaFn,
   listProvinsiFn,
   listKecamatanFn,
 } from "../../api/Lokasi/Lokasi";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { format, formatISO } from "date-fns";
 import Calendar from "react-calendar";
@@ -130,6 +131,8 @@ export default function Kelola_Client() {
 
   const navigate = useNavigate();
 
+  const queryClient = useQueryClient();
+
   const {
     data: dataClient,
     refetch: refetchClient,
@@ -139,6 +142,8 @@ export default function Kelola_Client() {
     queryKey: ["allClient", page, debouncedSearchTerm],
     queryFn: () => kelolaClientFn({ page, search: debouncedSearchTerm }),
   });
+
+  console.log({ dataClient });
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
@@ -201,15 +206,16 @@ export default function Kelola_Client() {
     mutationFn: (data) => insertClientFn(data),
     onMutate() {},
     onSuccess: async (res) => {
-      console.log(res);
-      refetchClient();
-      handleClose();
-      reset();
-      // document.getElementById("modal1").close();
+      console.log("Client added:", res);
+      await queryClient.invalidateQueries({
+        queryKey: ["allClient"],
+        refetchType: "all",
+      }); // Refresh the client list
+      handleClose(); // Close the modal
+      reset(); // Reset the form
     },
     onError: (error) => {
       console.log(error);
-      // document.getElementById("modal1").close();
       const errorMessage = error.response?.data?.message || "An error occurred";
     },
   });
@@ -282,10 +288,9 @@ export default function Kelola_Client() {
       setProvinsi("");
       setKota("");
       setKecamatan("");
-      handleClose(); 
+      handleClose();
     })();
   };
-  
 
   const resetForm = () => {
     reset();
@@ -362,6 +367,17 @@ export default function Kelola_Client() {
       console.log("Client restore:", updatedClient);
     } catch (error) {
       console.error("Failed to restore client:", error);
+    }
+  };
+
+  const handleResetPasswordClient = async (id) => {
+    try {
+      const updatedClient = await resetPasswordFn(id);
+      refetchClient();
+      handleClose();
+      console.log("Client reset password:", updatedClient);
+    } catch (error) {
+      console.error("Failed to reset password client:", error);
     }
   };
 
@@ -532,15 +548,15 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setProvinsi(newValue); 
+                              setProvinsi(newValue);
                             } else if (newValue && newValue.provinsi) {
-                              setProvinsi(newValue.provinsi); 
+                              setProvinsi(newValue.provinsi);
                             } else {
                               setProvinsi("");
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setProvinsi(newInputValue); 
+                            setProvinsi(newInputValue);
                           }}
                           renderInput={(params) => (
                             <TextField
@@ -592,15 +608,15 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setKota(newValue); 
+                              setKota(newValue);
                             } else if (newValue && newValue.kabupaten) {
-                              setKota(newValue.kabupaten); 
+                              setKota(newValue.kabupaten);
                             } else {
-                              setKota(""); 
+                              setKota("");
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setKota(newInputValue); 
+                            setKota(newInputValue);
                           }}
                           renderInput={(params) => (
                             <TextField
@@ -624,7 +640,6 @@ export default function Kelola_Client() {
                       )}
                     </Stack>
 
-                
                     <Stack direction="row" spacing={2} alignItems="center">
                       <Typography
                         id="modal-modal-title"
@@ -653,15 +668,15 @@ export default function Kelola_Client() {
                           freeSolo
                           onChange={(e, newValue) => {
                             if (typeof newValue === "string") {
-                              setKecamatan(newValue); 
+                              setKecamatan(newValue);
                             } else if (newValue && newValue.kecamatan) {
-                              setKecamatan(newValue.kecamatan); 
+                              setKecamatan(newValue.kecamatan);
                             } else {
-                              setKecamatan(""); 
+                              setKecamatan("");
                             }
                           }}
                           onInputChange={(e, newInputValue) => {
-                            setKecamatan(newInputValue); 
+                            setKecamatan(newInputValue);
                           }}
                           renderInput={(params) => (
                             <TextField
@@ -1651,7 +1666,9 @@ export default function Kelola_Client() {
                         <Button
                           color="warning"
                           sx={{ flex: 1 }}
-                          onClick={() => handleOpen("modal4")}
+                          onClick={() => {
+                            handleOpen("modal4", row.id_client);
+                          }}
                         >
                           <RestartAltIcon />
                         </Button>
@@ -1672,6 +1689,7 @@ export default function Kelola_Client() {
                             >
                               Apakah anda yakin untuk mereset password?
                             </H4>
+
                             <Stack
                               direction="row"
                               spacing={12}
@@ -1681,10 +1699,22 @@ export default function Kelola_Client() {
                                 marginTop: 5,
                               }}
                             >
-                              <Button variant="contained" color="error">
+                              <Button
+                                variant="contained"
+                                color="error"
+                                onClick={handleClose}
+                              >
                                 Tidak
                               </Button>
-                              <Button variant="contained" color="success">
+                              <Button
+                                variant="contained"
+                                color="success"
+                                onClick={() => {
+                                  handleResetPasswordClient(
+                                    dataSingleClient?.id_client
+                                  );
+                                }}
+                              >
                                 Ya
                               </Button>
                             </Stack>

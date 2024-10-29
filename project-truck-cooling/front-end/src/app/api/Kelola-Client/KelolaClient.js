@@ -30,3 +30,9 @@ export const restoreFn = async (id, data) => {
   return response.data;
 };
 
+export const resetPasswordFn = async (id, data) => {
+  const response = await Api.put(`/api/clients/${id}/reset-password`, data);  
+  return response.data;
+};
+
+
