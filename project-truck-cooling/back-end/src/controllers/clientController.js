@@ -8,6 +8,19 @@ const pool = new Pool({
     "postgresql://postgres:LBMHEDlIMcnMWMzOibdwsMSkSFmbbhKN@junction.proxy.rlwy.net:21281/railway", // Use the full connection string
 });
 
+function formatDate(dateString) {
+  const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  const date = new Date(dateString);
+  const dayName = days[date.getUTCDay()];
+  const day = date.getUTCDate().toString().padStart(2, '0');
+  const monthName = months[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+
+  return `${dayName}, ${monthName} ${day} ${year}`;
+}
+
 export const createClient = async (req, res) => {
   const {
     namaclient,
@@ -59,6 +72,8 @@ export const createClient = async (req, res) => {
       ]
     );
 
+    const formattedJoinDate = formatDate(tgl_bergabung);
+
     let transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -80,7 +95,7 @@ export const createClient = async (req, res) => {
       Password: ${randomPassword}
       Address: ${jalan}, ${kecamatan}, ${kabupaten}, ${provinsi}, ${kode_pos}
       Contact: ${kontakclient}
-      Join Date: ${tgl_bergabung}
+      Join Date: ${formattedJoinDate}
       Account Status: ${status_akun}
       
       Please change your password after your first login.
@@ -396,6 +411,8 @@ export const resetPassword = async (req, res) => {
       status_akun
     } = client;
 
+    const formattedJoinDate = formatDate(tgl_bergabung);
+
     const defaultPassword = Math.random().toString(36).slice(-8); 
     if (defaultPassword.length > 20) {
       defaultPassword = defaultPassword.slice(0, 20);
@@ -436,7 +453,7 @@ export const resetPassword = async (req, res) => {
       Password: ${defaultPassword}
       Address: ${jalan}, ${kecamatan}, ${kabupaten}, ${provinsi}, ${kode_pos}
       Contact: ${kontakclient}
-      Join Date: ${tgl_bergabung}
+      Join Date: ${formattedJoinDate}
       Account Status: ${status_akun}
       
       Thank you!`
