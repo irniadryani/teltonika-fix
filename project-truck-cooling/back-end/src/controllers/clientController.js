@@ -203,15 +203,14 @@ export const updateClient = async (req, res) => {
   } = req.body;
   
   try {
-    // Start a transaction
     const client = await pool.connect();
     
     try {
       await client.query('BEGIN');
 
-      // First check if client exists
+      // Check if client exists and get current email
       const checkResult = await client.query(
-        'SELECT * FROM Client WHERE id_client = $1',
+        'SELECT email FROM Client WHERE id_client = $1',
         [id]
       );
 
@@ -220,6 +219,21 @@ export const updateClient = async (req, res) => {
         return res.status(404).json({
           message: `Client with id ${id} not found`
         });
+      }
+
+      const currentEmail = checkResult.rows[0].email;
+
+      // Check if the new email is already registered by another client
+      if (email && email !== currentEmail) {
+        const emailCheck = await client.query(
+          "SELECT * FROM Client WHERE email = $1",
+          [email]
+        );
+
+        if (emailCheck.rows.length > 0) {
+          await client.query('ROLLBACK');
+          return res.status(409).json({ message: "Email sudah terdaftar" }); // Pastikan statusnya 409
+        }        
       }
 
       // Perform the update
@@ -254,7 +268,6 @@ export const updateClient = async (req, res) => {
         id
       ]);
 
-      // Commit the transaction
       await client.query('COMMIT');
 
       res.status(200).json({

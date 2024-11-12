@@ -52,6 +52,7 @@ import "react-calendar/dist/Calendar.css";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import SearchIcon from "@mui/icons-material/Search";
+import { toast } from "react-toastify";
 
 function createData(no, nama, alamat, nohp, email, tgl, status) {
   return { no, nama, alamat, nohp, email, tgl, status };
@@ -128,6 +129,8 @@ export default function Kelola_Client() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const itemsPerPage = 10;
+  const [networkError, setNetworkError] = useState('');
+  const [registeredEmails, setRegisteredEmails] = useState([]);
 
   const navigate = useNavigate();
 
@@ -144,6 +147,17 @@ export default function Kelola_Client() {
   });
 
   console.log({ dataClient });
+
+  useEffect(() => {
+    if (dataClient) {
+      try {
+        const emails = dataClient?.clients.map(client => client.email); 
+        setRegisteredEmails(emails);
+      } catch (error) {
+        console.error('Error extracting emails:', error);
+      }
+    }
+  }, [dataClient]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
@@ -193,7 +207,7 @@ export default function Kelola_Client() {
   const {
     register,
     handleSubmit,
-    formState: { errors, touchedFields, isSubmitted },
+    formState: { errors, touchedFields, isSubmitted, setError},
     reset,
     control,
   } = useForm({
@@ -207,34 +221,57 @@ export default function Kelola_Client() {
     onMutate() {},
     onSuccess: async (res) => {
       console.log("Client added:", res);
+      toast.success("Account Successfully created!");
       await queryClient.invalidateQueries({
         queryKey: ["allClient"],
         refetchType: "all",
-      }); // Refresh the client list
-      handleClose(); // Close the modal
-      reset(); // Reset the form
+      }); 
+      handleClose(); 
+      reset(); 
+      
     },
     onError: (error) => {
       console.log(error);
-      const errorMessage = error.response?.data?.message || "An error occurred";
+      toast.error(error?.response?.data?.message, { position: "top-right" });
     },
   });
+
+  // const handleUpdateClient = useMutation({
+  //   mutationFn: (data) => updateClientFn(clientId, data),
+  //   onMutate() {},
+  //   onSuccess: (res) => {
+  //     console.log(res);
+  //     toast.success("Account Successfully updated!");
+  //     refetchClient();
+  //     handleClose();
+  //     setEditingClient(null);
+  //   },
+  //   onError: (error) => {
+  //     const errorMessage = error?.response?.data?.message || "Something went wrong";
+  //     console.error("Error updating client:", errorMessage);
+  //     toast.error(errorMessage, { position: "top-right" });
+  //     handleClose();
+  //   },    
+  // });
 
   const handleUpdateClient = useMutation({
     mutationFn: (data) => updateClientFn(clientId, data),
     onMutate() {},
     onSuccess: (res) => {
-      console.log(res);
+      toast.success("Account successfully updated!");
       refetchClient();
       handleClose();
-      // Reset the form or clear the editingClient state
       setEditingClient(null);
     },
     onError: (error) => {
-      console.error("Error updating client:", error);
-      // Handle error (e.g., show error message to user)
+      console.log('Error response:', error); 
+      const errorMessage = error?.response?.data?.message || "Something went wrong";
+      toast.error(errorMessage, { position: "top-right" });
+      handleClose();
     },
   });
+  
+  
 
   const addClient = async (data) => {
     if (!date) {
@@ -256,8 +293,12 @@ export default function Kelola_Client() {
     }
   };
 
+  const checkEmailAvailability = (email) => {
+    return !registeredEmails.includes(email);
+  };
+  
+
   const updateClient = async (data) => {
-    // Ensure all required fields are present
     const updatedData = {
       id_client: editingClient.id_client,
       namaclient: data.namaclient || editingClient.namaclient,
@@ -269,11 +310,40 @@ export default function Kelola_Client() {
       kontakclient: data.kontakclient || editingClient.kontakclient,
       email: data.email || editingClient.email,
       tgl_bergabung: data.tgl_bergabung || editingClient.tgl_bergabung,
-      // Add any other fields that are part of the client data
     };
-
-    handleUpdateClient.mutateAsync(updatedData);
+  
+    try {
+      if (!checkEmailAvailability(updatedData.email)) {
+        toast.error("Email sudah terdaftar, gunakan email lain.");
+        return;
+      }
+      await handleUpdateClient.mutateAsync(updatedData);
+    } catch (error) {
+      console.error("Error in updateClient:", error);
+      const errorMessage = error?.response?.data?.message || "Something went wrong";
+      toast.error(errorMessage, { position: "top-right" });
+    }
   };
+  
+
+  // const updateClient = async (data) => {
+  //   // Ensure all required fields are present
+  //   const updatedData = {
+  //     id_client: editingClient.id_client,
+  //     namaclient: data.namaclient || editingClient.namaclient,
+  //     jalan: data.jalan || editingClient.jalan,
+  //     provinsi: data.provinsi || editingClient.provinsi,
+  //     kabupaten: data.kabupaten || editingClient.kabupaten,
+  //     kecamatan: data.kecamatan || editingClient.kecamatan,
+  //     kode_pos: data.kode_pos || editingClient.kode_pos,
+  //     kontakclient: data.kontakclient || editingClient.kontakclient,
+  //     email: data.email || editingClient.email,
+  //     tgl_bergabung: data.tgl_bergabung || editingClient.tgl_bergabung,
+  //     // Add any other fields that are part of the client data
+  //   };
+
+  //   handleUpdateClient.mutateAsync(updatedData);
+  // };
 
   const handleEditInputChange = (field, value) => {
     setEditingClient((prevState) => ({
@@ -381,20 +451,6 @@ export default function Kelola_Client() {
     }
   };
 
-  // useEffect(() => {
-  //   if (dataClient?.clients) {
-  //     setValue("namaclient", dataClient.namaclient);
-  //     setValue("jalan", dataClient.jalan);
-  //     setValue("provinsi", dataClient.provinsi);
-  //     setValue("kabupaten", dataClient.kabupaten);
-  //     setValue("kecamatan", dataClient.kecamatan);
-  //     setValue("kode_pos", dataClient.kode_pos);
-  //     setValue("kontakclient", dataClient.kontakclient);
-  //     setValue("email", dataClient.email);
-  //     setValue("status_akun", dataClient.status_akun);
-  //     setValue("tgl_bergabung", dataClient.tgl_bergabung);
-  //   }
-  // }, [dataClient, setValue]);
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -771,14 +827,7 @@ export default function Kelola_Client() {
                         label="Email"
                         variant="outlined"
                         sx={{ width: 500 }}
-                        {...register("email", {
-                          required: "Email is required",
-                          pattern: {
-                            value:
-                              /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
-                            message: "Invalid email address",
-                          },
-                        })}
+                        {...register("email",)}
                         error={!!errors.email}
                         helperText={errors.email ? errors.email.message : ""}
                       />
@@ -1593,6 +1642,8 @@ export default function Kelola_Client() {
                                     sx={{
                                       width: 500,
                                     }}
+                                    error={!!errors.email}
+                                    helperText={errors.email ? errors.email.message : ""}
                                   />
                                 </Stack>
 
