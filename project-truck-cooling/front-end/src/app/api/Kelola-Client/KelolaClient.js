@@ -15,9 +15,19 @@ export const singleClientFn = async (id) => {
   return response.data;
 };
 
+// export const updateClientFn = async (id, data) => {
+//   const response = await Api.put(`/clients/${id}`, data);
+//   return response.data;
+// };
+
 export const updateClientFn = async (id, data) => {
-  const response = await Api.put(`/clients/${id}`, data);
-  return response.data;
+  try {
+    const response = await Api.put(`/clients/${id}`, data);
+    return response.data;
+  } catch (error) {
+    console.error("API error:", error); // Log the full error for debugging
+    throw error; // Throw error to trigger onError in the mutation
+  }
 };
 
 export const suspendFn = async (id, data) => {

@@ -2,6 +2,7 @@ import { createContext, useEffect, useReducer } from "react";
 import axios from "axios";
 // CUSTOM COMPONENT
 import { MatxLoading } from "app/components";
+import { Api } from "app/common/api";
 
 const initialState = {
   user: null,
@@ -67,7 +68,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     (async () => {
       try {
-        const { data } = await axios.get("/api/auth/profile");
+        const { data } = await Api.get("/api/auth/profile");
         dispatch({ type: "INIT", payload: { isAuthenticated: true, user: data.user } });
       } catch (err) {
         console.error(err);

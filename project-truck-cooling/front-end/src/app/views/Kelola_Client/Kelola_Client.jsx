@@ -129,7 +129,7 @@ export default function Kelola_Client() {
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const itemsPerPage = 10;
-  const [networkError, setNetworkError] = useState('');
+  const [networkError, setNetworkError] = useState("");
   const [registeredEmails, setRegisteredEmails] = useState([]);
 
   const navigate = useNavigate();
@@ -147,17 +147,6 @@ export default function Kelola_Client() {
   });
 
   console.log({ dataClient });
-
-  useEffect(() => {
-    if (dataClient) {
-      try {
-        const emails = dataClient?.clients.map(client => client.email); 
-        setRegisteredEmails(emails);
-      } catch (error) {
-        console.error('Error extracting emails:', error);
-      }
-    }
-  }, [dataClient]);
 
   const handlePageChange = (event, newPage) => {
     setPage(newPage);
@@ -207,7 +196,7 @@ export default function Kelola_Client() {
   const {
     register,
     handleSubmit,
-    formState: { errors, touchedFields, isSubmitted, setError},
+    formState: { errors, touchedFields, isSubmitted, setError },
     reset,
     control,
   } = useForm({
@@ -225,53 +214,15 @@ export default function Kelola_Client() {
       await queryClient.invalidateQueries({
         queryKey: ["allClient"],
         refetchType: "all",
-      }); 
-      handleClose(); 
-      reset(); 
-      
+      });
+      handleClose();
+      reset();
     },
     onError: (error) => {
       console.log(error);
       toast.error(error?.response?.data?.message, { position: "top-right" });
     },
   });
-
-  // const handleUpdateClient = useMutation({
-  //   mutationFn: (data) => updateClientFn(clientId, data),
-  //   onMutate() {},
-  //   onSuccess: (res) => {
-  //     console.log(res);
-  //     toast.success("Account Successfully updated!");
-  //     refetchClient();
-  //     handleClose();
-  //     setEditingClient(null);
-  //   },
-  //   onError: (error) => {
-  //     const errorMessage = error?.response?.data?.message || "Something went wrong";
-  //     console.error("Error updating client:", errorMessage);
-  //     toast.error(errorMessage, { position: "top-right" });
-  //     handleClose();
-  //   },    
-  // });
-
-  const handleUpdateClient = useMutation({
-    mutationFn: (data) => updateClientFn(clientId, data),
-    onMutate() {},
-    onSuccess: (res) => {
-      toast.success("Account successfully updated!");
-      refetchClient();
-      handleClose();
-      setEditingClient(null);
-    },
-    onError: (error) => {
-      console.log('Error response:', error); 
-      const errorMessage = error?.response?.data?.message || "Something went wrong";
-      toast.error(errorMessage, { position: "top-right" });
-      handleClose();
-    },
-  });
-  
-  
 
   const addClient = async (data) => {
     if (!date) {
@@ -293,10 +244,23 @@ export default function Kelola_Client() {
     }
   };
 
-  const checkEmailAvailability = (email) => {
-    return !registeredEmails.includes(email);
-  };
-  
+  const handleUpdateClient = useMutation({
+    mutationFn: (data) => updateClientFn(clientId, data),
+    onSuccess: (res) => {
+      console.log(res);
+      toast.success("Account successfully updated!");
+      refetchClient();
+      handleClose();
+      setEditingClient(null);
+    },
+    onError: (error) => {
+      console.log("Error response:", error);
+      const errorMessage =
+        error?.response?.data?.message || "Something went wrong";
+      toast.error(errorMessage, { position: "top-right" });
+      handleClose();
+    },
+  });
 
   const updateClient = async (data) => {
     const updatedData = {
@@ -311,39 +275,9 @@ export default function Kelola_Client() {
       email: data.email || editingClient.email,
       tgl_bergabung: data.tgl_bergabung || editingClient.tgl_bergabung,
     };
-  
-    try {
-      if (!checkEmailAvailability(updatedData.email)) {
-        toast.error("Email sudah terdaftar, gunakan email lain.");
-        return;
-      }
-      await handleUpdateClient.mutateAsync(updatedData);
-    } catch (error) {
-      console.error("Error in updateClient:", error);
-      const errorMessage = error?.response?.data?.message || "Something went wrong";
-      toast.error(errorMessage, { position: "top-right" });
-    }
+
+    handleUpdateClient.mutate(updatedData);
   };
-  
-
-  // const updateClient = async (data) => {
-  //   // Ensure all required fields are present
-  //   const updatedData = {
-  //     id_client: editingClient.id_client,
-  //     namaclient: data.namaclient || editingClient.namaclient,
-  //     jalan: data.jalan || editingClient.jalan,
-  //     provinsi: data.provinsi || editingClient.provinsi,
-  //     kabupaten: data.kabupaten || editingClient.kabupaten,
-  //     kecamatan: data.kecamatan || editingClient.kecamatan,
-  //     kode_pos: data.kode_pos || editingClient.kode_pos,
-  //     kontakclient: data.kontakclient || editingClient.kontakclient,
-  //     email: data.email || editingClient.email,
-  //     tgl_bergabung: data.tgl_bergabung || editingClient.tgl_bergabung,
-  //     // Add any other fields that are part of the client data
-  //   };
-
-  //   handleUpdateClient.mutateAsync(updatedData);
-  // };
 
   const handleEditInputChange = (field, value) => {
     setEditingClient((prevState) => ({
@@ -450,7 +384,6 @@ export default function Kelola_Client() {
       console.error("Failed to reset password client:", error);
     }
   };
-
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
@@ -827,7 +760,7 @@ export default function Kelola_Client() {
                         label="Email"
                         variant="outlined"
                         sx={{ width: 500 }}
-                        {...register("email",)}
+                        {...register("email")}
                         error={!!errors.email}
                         helperText={errors.email ? errors.email.message : ""}
                       />
@@ -1643,7 +1576,9 @@ export default function Kelola_Client() {
                                       width: 500,
                                     }}
                                     error={!!errors.email}
-                                    helperText={errors.email ? errors.email.message : ""}
+                                    helperText={
+                                      errors.email ? errors.email.message : ""
+                                    }
                                   />
                                 </Stack>
 
